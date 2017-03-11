@@ -215,22 +215,32 @@ BOOST_AUTO_TEST_CASE(std_unordered_map_func3)
     BOOST_CHECK_EQUAL(func3(2, 'Y', "str"), cachedFunc(2, 'Y', "str"));
 }
 
+BOOST_AUTO_TEST_CASE(std_map_noncapturing_lambda)
+{
+    auto lambda = [] (int p) { return 10 + p; };
+    // non-capturing lambda is convertible to function ptr (operator+ just forces it)
+    auto cachedLambda = make_cached_func<std::map>(+lambda);
+    BOOST_CHECK_EQUAL(lambda(3), cachedLambda(3));
+    BOOST_CHECK_EQUAL(lambda(3), cachedLambda(3));
+    BOOST_CHECK_EQUAL(lambda(5), cachedLambda(5));
+}
+
 BOOST_AUTO_TEST_CASE(std_map_refcapturing_lambda)
 {
     int a = 5;
     auto lambda = [&] (int p) { return a + p; };
     auto func = std::function<int(int)>(lambda);
-    auto cached_lambda = make_cached_func<std::map>(func);
+    auto cachedLambda = make_cached_func<std::map>(func);
     a = 10;
     BOOST_CHECK_EQUAL(lambda(3), 13);
-    BOOST_CHECK_EQUAL(lambda(3), cached_lambda(3));
-    BOOST_CHECK_EQUAL(lambda(3), cached_lambda(3));
-    BOOST_CHECK_EQUAL(lambda(4), cached_lambda(4));
+    BOOST_CHECK_EQUAL(lambda(3), cachedLambda(3));
+    BOOST_CHECK_EQUAL(lambda(3), cachedLambda(3));
+    BOOST_CHECK_EQUAL(lambda(4), cachedLambda(4));
     a = 20;
     BOOST_CHECK_EQUAL(lambda(3), 23);
-    BOOST_CHECK_EQUAL(cached_lambda(3), 13); // cache hit
-    BOOST_CHECK_EQUAL(cached_lambda(4), 14); // cache hit
-    BOOST_CHECK_EQUAL(cached_lambda(5), 25); // cache miss
+    BOOST_CHECK_EQUAL(cachedLambda(3), 13); // cache hit
+    BOOST_CHECK_EQUAL(cachedLambda(4), 14); // cache hit
+    BOOST_CHECK_EQUAL(cachedLambda(5), 25); // cache miss
 
 }
 

@@ -56,7 +56,14 @@ namespace functools
 
     template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
     cached_func<MapType<std::tuple<ArgTypes...>, ReturnType>, ReturnType, ArgTypes...>
-    make_cached_func(std::function<ReturnType(ArgTypes...)> func)
+    make_cached_func(const std::function<ReturnType(ArgTypes...)>& func)
+    {
+        return {func};
+    }
+
+    template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
+    cached_func<MapType<std::tuple<ArgTypes...>, ReturnType>, ReturnType, ArgTypes...>
+    make_cached_func(std::function<ReturnType(ArgTypes...)>&& func)
     {
         return {std::move(func)};
     }
