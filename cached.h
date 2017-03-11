@@ -14,10 +14,16 @@ namespace functools
     {
         public:
             using key_type = typename MapType::key_type;
+            using size_type = typename MapType::size_type;
             using function_type = std::function<ReturnType(ArgTypes...)>;
 
-            cached_func(const function_type& func): mFunc(func) {}
-            cached_func(function_type&& func): mFunc(std::move(func)) {}
+            cached_func(const function_type& func)
+                : mFunc(func)
+            {}
+
+            cached_func(function_type&& func)
+                : mFunc(std::move(func))
+            {}
 
             ReturnType operator() (ArgTypes... args) const
             {
@@ -29,6 +35,12 @@ namespace functools
                 mCache.emplace(key_type(args...), ret);
                 return ret;
             }
+
+            size_type cache_size() const
+            { return mCache.size(); }
+
+            void cache_clear()
+            { mCache.clear(); }
 
         private:
             function_type mFunc;

@@ -52,11 +52,17 @@ BOOST_AUTO_TEST_SUITE(functional)
 BOOST_AUTO_TEST_CASE(std_map_func1)
 {
     auto cached_func1 = make_cached_func<std::map>(func1);
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 0);
     BOOST_CHECK_EQUAL(func1(1), cached_func1(1));
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 1);
     BOOST_CHECK_EQUAL(func1(1), cached_func1(1));
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 1);
     BOOST_CHECK_EQUAL(func1(2), cached_func1(2));
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 2);
     BOOST_CHECK_EQUAL(func1(1), cached_func1(1));
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 2);
     BOOST_CHECK_EQUAL(func1(2), cached_func1(2));
+    BOOST_CHECK_EQUAL(cached_func1.cache_size(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(std_unordered_map_func1)
