@@ -102,7 +102,7 @@ namespace
 }
 
 // =====================================================================================================================
-BOOST_AUTO_TEST_SUITE(test_cached_func)
+BOOST_AUTO_TEST_SUITE(test_parameter_counts)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(function_with_one_param, TCachedFunc, TestCachedFunc1)
 {
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(function_with_three_params, TCachedFunc, TestCache
 BOOST_AUTO_TEST_SUITE_END()
 
 // =====================================================================================================================
-BOOST_AUTO_TEST_SUITE(test_make_cached_func)
+BOOST_AUTO_TEST_SUITE(test_creation)
 
 BOOST_AUTO_TEST_CASE(std_map_func1)
 {
@@ -217,6 +217,35 @@ BOOST_AUTO_TEST_CASE(std_unordered_map_func3)
     BOOST_CHECK_EQUAL(func3(2, 'Y', "str"), cachedFunc(2, 'Y', "str"));
     BOOST_CHECK_EQUAL(func3(1, 'X', "str"), cachedFunc(1, 'X', "str"));
     BOOST_CHECK_EQUAL(func3(2, 'Y', "str"), cachedFunc(2, 'Y', "str"));
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+// =====================================================================================================================
+BOOST_AUTO_TEST_SUITE(test_types_and_parameters)
+
+BOOST_AUTO_TEST_CASE(cache_should_not_store_function_params_as_references)
+{
+    std::string str1 = "orig", str2 = "orig";
+    auto cachedFunc = make_cached_func<std::map>(func3);
+
+    BOOST_CHECK_EQUAL(func3(1, 'X', str1), cachedFunc(1, 'X', str1));
+    BOOST_CHECK_EQUAL(func3(2, 'Y', str1), cachedFunc(2, 'Y', str1));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 2);
+
+    BOOST_CHECK_EQUAL(func3(1, 'X', str2), cachedFunc(1, 'X', str2));
+    BOOST_CHECK_EQUAL(func3(2, 'Y', str2), cachedFunc(2, 'Y', str2));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 2);
+
+    str1 = "changed";
+    BOOST_CHECK_EQUAL(func3(1, 'X', str1), cachedFunc(1, 'X', str1));
+    BOOST_CHECK_EQUAL(func3(2, 'Y', str1), cachedFunc(2, 'Y', str1));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 4);
+
+    str2 = "changed";
+    BOOST_CHECK_EQUAL(func3(1, 'X', str2), cachedFunc(1, 'X', str2));
+    BOOST_CHECK_EQUAL(func3(2, 'Y', str2), cachedFunc(2, 'Y', str2));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(std_map_noncapturing_lambda)

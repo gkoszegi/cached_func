@@ -2,6 +2,7 @@
 #define FUNCTOOLS_CACHED_HPP_INCLUDED
 
 #include <functional> // function, forward
+#include <type_traits> // remove_reference
 #include <utility> // tuple
 
 namespace functools
@@ -48,21 +49,21 @@ namespace functools
     };
 
     template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<ArgTypes...>, ReturnType>, ReturnType, ArgTypes...>
+    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
     make_cached_func(ReturnType func(ArgTypes...))
     {
         return {func};
     }
 
     template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<ArgTypes...>, ReturnType>, ReturnType, ArgTypes...>
+    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
     make_cached_func(const std::function<ReturnType(ArgTypes...)>& func)
     {
         return {func};
     }
 
     template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<ArgTypes...>, ReturnType>, ReturnType, ArgTypes...>
+    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
     make_cached_func(std::function<ReturnType(ArgTypes...)>&& func)
     {
         return {std::move(func)};
