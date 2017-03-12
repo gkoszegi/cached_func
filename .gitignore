@@ -1,1 +1,3 @@
 test/test_cached
+examples/basic_map
+examples/basic_unordered_map
