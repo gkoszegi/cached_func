@@ -248,6 +248,39 @@ BOOST_AUTO_TEST_CASE(cache_should_not_store_function_params_as_references)
     BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 4);
 }
 
+BOOST_AUTO_TEST_CASE(cache_should_not_store_results_as_references)
+{
+    std::function<const std::string&(int n, char c, const std::string&)> func =
+        [] (int n, char c, const std::string& s) -> const std::string&
+        {
+            if (n <= 0)
+                return s;
+            static std::string temp;
+            temp = func3(n, c, s);
+            return temp;
+        };
+
+    auto cachedFunc = make_cached_func<std::map>(func);
+
+    std::string str1 = "orig", str2 = "orig";
+
+    BOOST_CHECK_EQUAL(func3(0, 'Y', str1), cachedFunc(0, 'Y', str1));
+    BOOST_CHECK_EQUAL(func3(1, 'X', str1), cachedFunc(1, 'X', str1));
+    BOOST_CHECK_EQUAL(func3(2, 'Z', str1), cachedFunc(2, 'Z', str1));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 3);
+
+    str1 = "changed";
+
+    BOOST_CHECK_EQUAL(func3(0, 'Y', str2), cachedFunc(0, 'Y', str2));
+    BOOST_CHECK_EQUAL(func3(1, 'X', str2), cachedFunc(1, 'X', str2));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 3);
+
+    BOOST_CHECK_EQUAL(func3(1, 'X', str1), cachedFunc(1, 'X', str1));
+    BOOST_CHECK_EQUAL(func3(0, 'Y', str1), cachedFunc(0, 'Y', str1));
+    BOOST_CHECK_EQUAL(func3(1, 'X', str1), cachedFunc(1, 'X', str1));
+    BOOST_CHECK_EQUAL(cachedFunc.cache_size(), 5);
+}
+
 BOOST_AUTO_TEST_CASE(std_map_noncapturing_lambda)
 {
     auto lambda = [] (int p) { return 10 + p; };

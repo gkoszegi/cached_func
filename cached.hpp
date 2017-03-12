@@ -15,6 +15,8 @@ namespace functools
     {
         public:
             using key_type = typename MapType::key_type;
+            using mapped_type = typename MapType::mapped_type;
+            using result_type = mapped_type;
             using size_type = typename MapType::size_type;
             using function_type = std::function<ReturnType(ArgTypes...)>;
 
@@ -26,15 +28,15 @@ namespace functools
                 : mFunc(std::move(func))
             {}
 
-            ReturnType operator() (ArgTypes... args) const
+            result_type operator() (ArgTypes... args) const
             {
                 auto found = mCache.find(key_type(args...));
                 if (found != mCache.end())
                     return found->second;
 
-                ReturnType ret = mFunc(std::forward<ArgTypes>(args)...);
+                result_type ret = mFunc(std::forward<ArgTypes>(args)...);
                 mCache.emplace(key_type(args...), ret);
-                return ret;
+                return std::move(ret);
             }
 
             size_type cache_size() const
@@ -48,22 +50,46 @@ namespace functools
             mutable MapType mCache;
     };
 
-    template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
+    template <
+        template<typename...> class MapType,
+        typename ReturnType,
+        typename... ArgTypes>
+    cached_func<
+        MapType<
+            std::tuple<std::remove_reference_t<ArgTypes>...>,
+            std::remove_reference_t<ReturnType> >,
+        ReturnType,
+        ArgTypes... >
     make_cached_func(ReturnType func(ArgTypes...))
     {
         return {func};
     }
 
-    template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
+    template <
+        template<typename...> class MapType,
+        typename ReturnType,
+        typename... ArgTypes>
+    cached_func<
+        MapType<
+            std::tuple<std::remove_reference_t<ArgTypes>...>,
+            std::remove_reference_t<ReturnType> >,
+        ReturnType,
+        ArgTypes... >
     make_cached_func(const std::function<ReturnType(ArgTypes...)>& func)
     {
         return {func};
     }
 
-    template <template<typename...>class MapType, typename ReturnType, typename... ArgTypes>
-    cached_func<MapType<std::tuple<std::remove_reference_t<ArgTypes>...>, ReturnType>, ReturnType, ArgTypes...>
+    template <
+        template<typename...> class MapType,
+        typename ReturnType,
+        typename... ArgTypes>
+    cached_func<
+        MapType<
+            std::tuple<std::remove_reference_t<ArgTypes>...>,
+            std::remove_reference_t<ReturnType> >,
+        ReturnType,
+        ArgTypes... >
     make_cached_func(std::function<ReturnType(ArgTypes...)>&& func)
     {
         return {std::move(func)};
