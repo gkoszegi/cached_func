@@ -2,7 +2,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/test_case_template.hpp>
 
-#include "cached.h"
+#include <cached.hpp>
 
 #include <string>
 #include <map>

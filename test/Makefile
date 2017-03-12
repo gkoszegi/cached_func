@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall
+INCLUDEDIR=..
+CXXFLAGS = -std=c++14 -Wall -I$(INCLUDEDIR)
 
 all: test_cached
 
@@ -15,5 +16,6 @@ check: test_cached
 memcheck: test_cached
 	valgrind --leak-check=full ./test_cached --report_level=short
 
-test_cached: cached.h
+test_cached: $(INCLUDEDIR)/cached.hpp
 
+#end

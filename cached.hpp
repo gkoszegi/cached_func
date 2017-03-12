@@ -1,5 +1,5 @@
-#ifndef FUNCTOOLS_CACHED_H_INCLUDED
-#define FUNCTOOLS_CACHED_H_INCLUDED
+#ifndef FUNCTOOLS_CACHED_HPP_INCLUDED
+#define FUNCTOOLS_CACHED_HPP_INCLUDED
 
 #include <functional> // function, forward
 #include <utility> // tuple
