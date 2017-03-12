@@ -4,10 +4,14 @@
 
 #include <cached.hpp>
 
-#include <string>
+#include <algorithm>
 #include <map>
+#include <string>
 #include <unordered_map>
+
 #include <boost/functional/hash.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm/copy.hpp>
 
 using namespace functools;
 
@@ -242,6 +246,80 @@ BOOST_AUTO_TEST_CASE(std_map_refcapturing_lambda)
     BOOST_CHECK_EQUAL(cachedLambda(4), 14); // cache hit
     BOOST_CHECK_EQUAL(cachedLambda(5), 25); // cache miss
 
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+// =====================================================================================================================
+BOOST_AUTO_TEST_SUITE(usecases_for_cached_func)
+
+BOOST_AUTO_TEST_CASE(converted_to_std_function)
+{
+    std::function<unsigned(unsigned)>
+        func = [] (unsigned p) { return 10 * p; },
+        cachedFunc = make_cached_func<std::map>(func);
+
+    BOOST_CHECK_EQUAL(func(7), cachedFunc(7));
+    BOOST_CHECK_EQUAL(func(0), cachedFunc(0));
+}
+
+BOOST_AUTO_TEST_CASE(used_in_std_transform_with_1_input_range)
+{
+    auto cachedFunc = make_cached_func<std::unordered_map>(func1);
+    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4};
+    std::vector<int> outOrig(input.size()), outCached(input.size());
+
+    std::transform(input.begin(), input.end(), outOrig.begin(), func1);
+    std::transform(input.begin(), input.end(), outCached.begin(), cachedFunc);
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+            outOrig.begin(), outOrig.end(),
+            outCached.begin(), outCached.end());
+}
+
+BOOST_AUTO_TEST_CASE(used_in_std_transform_with_2_input_ranges)
+{
+    auto cachedFunc = make_cached_func<std::unordered_map>(func2);
+    const std::vector<int> input1 = {1, 1, 2, 1, 2, 3, 4, 1, 1, 5};
+    const std::vector<int> input2 = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2};
+    std::vector<int> outOrig(input1.size()), outCached(input1.size());
+
+    std::transform(input1.begin(), input1.end(), input2.begin(), outOrig.begin(), func2);
+    std::transform(input1.begin(), input1.end(), input2.begin(), outCached.begin(), cachedFunc);
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+            outOrig.begin(), outOrig.end(),
+            outCached.begin(), outCached.end());
+}
+
+BOOST_AUTO_TEST_CASE(used_in_boost_range_transform)
+{
+    auto cachedFunc = make_cached_func<std::unordered_map>(func1);
+    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4};
+    std::vector<int> outOrig(input.size()), outCached(input.size());
+
+    using boost::adaptors::transform;
+    boost::copy(transform(input, func1), outOrig.begin());
+    boost::copy(transform(input, cachedFunc), outCached.begin());
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+            outOrig.begin(), outOrig.end(),
+            outCached.begin(), outCached.end());
+}
+
+BOOST_AUTO_TEST_CASE(used_in_boost_range_transformed)
+{
+    auto cachedFunc = make_cached_func<std::unordered_map>(func1);
+    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4};
+    std::vector<int> outOrig(input.size()), outCached(input.size());
+
+    using boost::adaptors::transformed;
+    boost::copy(input | transformed(func1), outOrig.begin());
+    boost::copy(input | transformed(cachedFunc), outCached.begin());
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+            outOrig.begin(), outOrig.end(),
+            outCached.begin(), outCached.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
