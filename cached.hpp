@@ -30,12 +30,13 @@ namespace functools
 
             result_type operator() (ArgTypes... args) const
             {
-                auto found = mCache.find(key_type(args...));
+                key_type key(args...);
+                auto found = mCache.find(key);
                 if (found != mCache.end())
                     return found->second;
 
                 result_type ret = mFunc(std::forward<ArgTypes>(args)...);
-                mCache.emplace(key_type(args...), ret);
+                mCache.emplace(std::move(key), ret);
                 return std::move(ret);
             }
 
