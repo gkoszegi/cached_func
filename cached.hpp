@@ -37,7 +37,7 @@ namespace functools
 
                 result_type ret = mFunc(std::forward<ArgTypes>(args)...);
                 mCache.emplace(std::move(key), ret);
-                return std::move(ret);
+                return ret;
             }
 
             size_type cache_size() const
