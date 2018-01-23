@@ -18,10 +18,9 @@ namespace functools
         struct CachedItem
         {
             Value value;
-            Position pos;
+            const Position pos;
 
-            operator Value() const
-            { return value; }
+            operator Value() const { return value; }
         };
 
         using Items = std::unordered_map<Key, CachedItem>;
@@ -30,6 +29,7 @@ namespace functools
             using key_type = Key;
             using mapped_type = Value;
             using size_type = typename Items::size_type;
+            using iterator = typename Items::iterator;
             using const_iterator = typename Items::const_iterator;
 
             LRU(size_type capacity)
@@ -39,21 +39,37 @@ namespace functools
             }
 
             template <typename TKey, typename TValue>
-            void emplace(TKey&& key, TValue&& value)
+            auto emplace(TKey&& key, TValue&& value)
             {
                 if (mCapacity == 0)
-                    return;
+                    return std::make_pair(end(), false);
+
+                auto found = find(key);
+                if (found != end())
+                {
+                    found->second.value = std::forward<TValue>(value);
+                    return std::make_pair(found, false);
+                }
 
                 if (mOrder.size() == mCapacity)
-                    evict_least_recent();
+                {
+                    mItems.erase(mOrder.front());
+                    mOrder.front() = key;
+                    mOrder.splice(mOrder.end(), mOrder, mOrder.begin());
+                }
+                else
+                {
+                    mOrder.push_back(key);
+                }
 
-                mOrder.push_back(key);
-                mItems.emplace(
+                // static_assert(std::is_move_constructible<CachedItem>::value, "");
+
+                return mItems.emplace(
                         std::forward<TKey>(key),
                         CachedItem{std::forward<TValue>(value), --mOrder.end()});
             }
 
-            const_iterator find(const Key& key)
+            iterator find(const Key& key)
             {
                 auto found = mItems.find(key);
                 if (found == mItems.end())
@@ -63,20 +79,13 @@ namespace functools
                 return found;
             }
 
-            const_iterator end() const
-            {
-                return {};
-            }
+            iterator end() { return {}; }
 
-            size_type size() const
-            {
-                return mItems.size();
-            }
+            const_iterator end() const { return {}; }
 
-            size_type capacity() const
-            {
-                return mCapacity;
-            }
+            size_type size() const { return mItems.size(); }
+
+            size_type capacity() const { return mCapacity; }
 
             void clear()
             {
@@ -85,12 +94,6 @@ namespace functools
             }
 
         private:
-            void evict_least_recent()
-            {
-                mItems.erase(mOrder.front());
-                mOrder.pop_front();
-            }
-
             size_type mCapacity;
             OrderList mOrder;
             Items mItems;
