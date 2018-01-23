@@ -2,72 +2,30 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/test_case_template.hpp>
 
+#include "tuple_hash.hpp"
 #include <cached.hpp>
+#include <lru.hpp>
 
 #include <algorithm>
 #include <map>
 #include <string>
 #include <unordered_map>
 
-#include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/copy.hpp>
 
 using namespace functools;
 
 // =====================================================================================================================
-namespace std
-{
-    template<typename T>
-    struct hash<std::tuple<T>>
-    {
-        size_t operator() (const std::tuple<T>& tup) const
-        {
-            return std::hash<T>()(std::get<0>(tup));
-        }
-    };
-
-    template<typename T1, typename T2>
-    struct hash<std::pair<T1, T2>>
-    {
-        size_t operator() (const std::pair<T1, T2>& p) const
-        {
-            size_t h = 0;
-            boost::hash_combine(h, p.first);
-            boost::hash_combine(h, p.second);
-            return h;
-        }
-    };
-
-    template<typename T1, typename T2>
-    struct hash<std::tuple<T1, T2>>
-    {
-        size_t operator() (const std::tuple<T1, T2>& tup) const
-        {
-            size_t h = 0;
-            boost::hash_combine(h, std::get<0>(tup));
-            boost::hash_combine(h, std::get<1>(tup));
-            return h;
-        }
-    };
-
-    template<typename T1, typename T2, typename T3>
-    struct hash<std::tuple<T1, T2, T3>>
-    {
-        size_t operator() (const std::tuple<T1, T2, T3>& tup) const
-        {
-            size_t h = 0;
-            boost::hash_combine(h, std::get<0>(tup));
-            boost::hash_combine(h, std::get<1>(tup));
-            boost::hash_combine(h, std::get<2>(tup));
-            return h;
-        }
-    };
-}
-
-// =====================================================================================================================
 namespace
 {
+    template <typename Key, typename Value>
+    class LRU: public functools::LRU<Key, Value>
+    {
+        public:
+            LRU(): functools::LRU<Key, Value>(3) {}
+    };
+
     int func1(int n)
     { return 100 + n; }
 
@@ -81,13 +39,19 @@ namespace
         cached_func<std::map<int, int>, int, int>,
         cached_func<std::map<std::tuple<int>, int>, int, int>,
         cached_func<std::unordered_map<int, int>, int, int>,
-        cached_func<std::unordered_map<std::tuple<int>, int>, int, int> >;
+        cached_func<std::unordered_map<std::tuple<int>, int>, int, int>,
+        cached_func<LRU<int, int>, int, int>,
+        cached_func<LRU<std::tuple<int>, int>, int, int>
+    >;
 
     using TestCachedFunc2 = boost::mpl::list<
         cached_func<std::map<std::tuple<int, int>, int>, int, int, int>,
         cached_func<std::map<std::pair<int, int>, int>, int, int, int>,
         cached_func<std::unordered_map<std::tuple<int, int>, int>, int, int, int>,
-        cached_func<std::unordered_map<std::pair<int, int>, int>, int, int, int> >;
+        cached_func<std::unordered_map<std::pair<int, int>, int>, int, int, int>,
+        cached_func<LRU<std::tuple<int, int>, int>, int, int, int>,
+        cached_func<LRU<std::pair<int, int>, int>, int, int, int>
+    >;
 
     using TestCachedFunc3 = boost::mpl::list<
         cached_func<
@@ -96,6 +60,10 @@ namespace
             int, char, std::string>,
         cached_func<
             std::unordered_map<std::tuple<int, char, std::string>, std::string>,
+            std::string,
+            int, char, std::string>,
+        cached_func<
+            LRU<std::tuple<int, char, std::string>, std::string>,
             std::string,
             int, char, std::string>
     >;
@@ -357,7 +325,7 @@ BOOST_AUTO_TEST_CASE(used_in_std_transform_with_2_input_ranges)
 BOOST_AUTO_TEST_CASE(used_in_boost_range_transform)
 {
     auto cachedFunc = make_cached_func<std::unordered_map>(func1);
-    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4};
+    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4, 5, 1, 2, 3};
     std::vector<int> outOrig(input.size()), outCached(input.size());
 
     using boost::adaptors::transform;
@@ -372,7 +340,7 @@ BOOST_AUTO_TEST_CASE(used_in_boost_range_transform)
 BOOST_AUTO_TEST_CASE(used_in_boost_range_transformed)
 {
     auto cachedFunc = make_cached_func<std::unordered_map>(func1);
-    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4};
+    const std::vector<int> input = {1, 1, 2, 1, 2, 3, 4, 5, 1, 2, 3};
     std::vector<int> outOrig(input.size()), outCached(input.size());
 
     using boost::adaptors::transformed;

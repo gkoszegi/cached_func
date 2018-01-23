@@ -3,7 +3,7 @@
 
 #include <functional> // function, forward
 #include <type_traits> // remove_reference
-#include <utility> // tuple
+#include <tuple>
 
 namespace functools
 {
@@ -41,7 +41,9 @@ namespace functools
             }
 
             size_type cache_size() const
-            { return mCache.size(); }
+            {
+                return mCache.size();
+            }
 
             void cache_clear()
             { mCache.clear(); }
