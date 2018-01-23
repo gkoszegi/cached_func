@@ -34,7 +34,9 @@ namespace functools
 
             LRU(size_type capacity)
                 : mCapacity(capacity)
-            {}
+            {
+                mItems.reserve(capacity);
+            }
 
             template <typename TKey, typename TValue>
             void emplace(TKey&& key, TValue&& value)
@@ -92,6 +94,17 @@ namespace functools
             size_type mCapacity;
             OrderList mOrder;
             Items mItems;
+    };
+
+    template <size_t capacity>
+    struct FixedCapacity
+    {
+        template <typename Key, typename Value>
+        class LRU: public functools::LRU<Key, Value>
+        {
+            public:
+                LRU(): functools::LRU<Key, Value>(capacity) {}
+        };
     };
 }
 

@@ -20,11 +20,7 @@ using namespace functools;
 namespace
 {
     template <typename Key, typename Value>
-    class LRU: public functools::LRU<Key, Value>
-    {
-        public:
-            LRU(): functools::LRU<Key, Value>(3) {}
-    };
+    using LRU = FixedCapacity<3>::LRU<Key, Value>;
 
     int func1(int n)
     { return 100 + n; }

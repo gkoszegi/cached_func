@@ -7,11 +7,11 @@ for this task and I'd like to implement a similarly easy to use tool in C++.
 
 Interface
 -----
-This library provides a template function `make_cached_func<map_type>(function_type f)` which creates an instance of `cached_func` function object with an identical callable interface as the input `f` function has. The `map_type` template parameter can be any template class whith a similar interface to `std::map` or `std::unordered_map`.
+This library provides a template function `make_cached_func<map_type>(function_type f)` which creates an instance of `cached_func` function object with an identical callable interface as the input `f` function has. The `map_type` template parameter can be any template class whith a similar interface to `std::map` or `std::unordered_map` for example `functools::LRU` also implements the necessary interface, so you can use it also as a storage.
 
 Requirements
 ------------
-- For using `cached.hpp` you will need a C++14 capable compiler (I've been using gcc 5.4 for development).
+- For using `cached.hpp` and `lru.hpp` you will need a C++14 capable compiler (I've been using gcc 5.4 for development).
 - For the compilation of the unit tests you will need boost (I used the default 1.58 version coming with Ubuntu 16.04).
 - The examples only need C++14 and the `std` library, boost is not necessary.
 
@@ -20,12 +20,6 @@ TODO list and future plans
 - Do not wrap the parameter list in `std::tuple` for cache keys that consits only of one value.
 - Supply the necessary hash functions to be used with `std::unordered_map` without poluting the std namespace.
 - Test usabilty with other map types like `boost::flat_map` and `google::dense_hash_map`.
-- Implement a cache storage with inbuilt logic to limit cache size (e.g. keep the last recently used `N` results).
-
-Comments & suggestions
-----------------------
-This, being my first github project is far from complete or perfect, but I'm planing to continue its development and add more public mini projects.
-Feel free to send me improvement ideas or any thoughts about this project.
 
 Example
 -------
@@ -36,6 +30,7 @@ Example
 #include <map>
 
 #include <cached.hpp>
+#include <lru.hpp>
 
 int func(int x)
 {
@@ -44,7 +39,9 @@ int func(int x)
 
 int main()
 {
-    auto cached_func = functools::make_cached_func<std::map>(func);
+    using namespace functools;
+
+    auto cached_func = make_cached_func<FixedCapacity<5>::LRU>(func);
 
     for (int j = 0; j < 10; ++j)
     {
