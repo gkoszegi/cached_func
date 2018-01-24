@@ -21,9 +21,11 @@ BOOST_AUTO_TEST_CASE(lru_zero_capacity)
     BOOST_CHECK_EQUAL(lru.size(), 0);
     BOOST_CHECK(lru.find(1) == lru.end());
 
-    lru.emplace(1, 11);
+    auto ret = lru.emplace(1, 11);
     BOOST_CHECK_EQUAL(lru.size(), 0);
     BOOST_CHECK(lru.find(1) == lru.end());
+    BOOST_CHECK(ret.first == lru.end());
+    BOOST_CHECK_EQUAL(ret.second, false);
 }
 
 // =====================================================================================================================
@@ -98,4 +100,94 @@ BOOST_AUTO_TEST_CASE(lru_evict_2)
     BOOST_CHECK(lru.find(1)->second == 11);
     BOOST_REQUIRE(lru.find(3) != lru.end());
     BOOST_CHECK(lru.find(3)->second == 33);
+}
+
+// =====================================================================================================================
+BOOST_AUTO_TEST_CASE(lru_emplace_update)
+{
+    LRU<int, int> lru(3);
+
+    BOOST_CHECK_EQUAL(lru.capacity(), 3);
+    BOOST_CHECK_EQUAL(lru.size(), 0);
+
+    lru.emplace(1, 1);
+    BOOST_CHECK_EQUAL(lru.size(), 1);
+    BOOST_CHECK(lru.find(1) != lru.end());
+
+    lru.emplace(2, 2);
+    BOOST_CHECK_EQUAL(lru.size(), 2);
+    BOOST_CHECK(lru.find(1) != lru.end());
+    BOOST_CHECK(lru.find(1)->second == 1);
+    BOOST_CHECK(lru.find(2) != lru.end());
+    BOOST_CHECK(lru.find(2)->second == 2);
+
+    lru.emplace(1, 11);
+    BOOST_CHECK_EQUAL(lru.size(), 2);
+    BOOST_CHECK(lru.find(1) != lru.end());
+    BOOST_CHECK(lru.find(1)->second == 11);
+    BOOST_CHECK(lru.find(2) != lru.end());
+    BOOST_CHECK(lru.find(2)->second == 2);
+}
+
+// =====================================================================================================================
+BOOST_AUTO_TEST_CASE(lru_emplace_return_value)
+{
+    LRU<int, int> lru(3);
+
+    BOOST_CHECK_EQUAL(lru.capacity(), 3);
+    BOOST_CHECK_EQUAL(lru.size(), 0);
+
+    auto ret = lru.emplace(1, 11);
+    BOOST_CHECK_EQUAL(ret.second, true);
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->first, 1);
+    BOOST_CHECK_EQUAL(*ret.first->second.pos, 1);
+    BOOST_CHECK_EQUAL(ret.first->second.value, 11);
+
+    ret = lru.emplace(2, 22);
+    BOOST_CHECK_EQUAL(lru.size(), 2);
+    BOOST_CHECK_EQUAL(ret.second, true);
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->first, 2);
+    BOOST_CHECK_EQUAL(*ret.first->second.pos, 2);
+    BOOST_CHECK_EQUAL(ret.first->second.value, 22);
+
+    ret = lru.emplace(1, 111);
+    BOOST_CHECK_EQUAL(lru.size(), 2);
+    BOOST_CHECK_EQUAL(ret.second, false);
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->first, 1);
+    BOOST_CHECK_EQUAL(*ret.first->second.pos, 1);
+    BOOST_CHECK_EQUAL(ret.first->second.value, 111);
+    BOOST_CHECK(lru.find(1) != lru.end());
+    BOOST_CHECK(lru.find(1)->second == 111);
+    BOOST_CHECK(lru.find(2) != lru.end());
+    BOOST_CHECK(lru.find(2)->second == 22);
+}
+
+// =====================================================================================================================
+BOOST_AUTO_TEST_CASE(lru_emplace_string)
+{
+    LRU<int, std::string> lru(3);
+
+    BOOST_CHECK_EQUAL(lru.capacity(), 3);
+    BOOST_CHECK_EQUAL(lru.size(), 0);
+
+    auto ret = lru.emplace(1, "11");
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->second.value, "11");
+    BOOST_REQUIRE(lru.find(1) != lru.end());
+    BOOST_CHECK_EQUAL(lru.find(1)->second.value, "11");
+
+    ret = lru.emplace(2, "22");
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->second.value, "22");
+    BOOST_REQUIRE(lru.find(2) != lru.end());
+    BOOST_CHECK_EQUAL(lru.find(2)->second.value, "22");
+
+    ret = lru.emplace(1, "111");
+    BOOST_REQUIRE(ret.first != lru.end());
+    BOOST_CHECK_EQUAL(ret.first->second.value, "111");
+    BOOST_REQUIRE(lru.find(1) != lru.end());
+    BOOST_CHECK_EQUAL(lru.find(1)->second.value, "111");
 }

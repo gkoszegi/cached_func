@@ -8,7 +8,7 @@ all: test_cached test_lru
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	rm -f *.o test_cached
+	rm -f *.o test_cached test_lru
 
 check: test_cached test_lru
 	./test_cached --report_level=short
@@ -20,7 +20,7 @@ memcheck: test_cached test_lru
 
 #dependencies
 
-test_cached: $(INCLUDEDIR)/cached.hpp tuple_hash.hpp
-test_cached: $(INCLUDEDIR)/lru.hpp
+test_cached: $(INCLUDEDIR)/cached.hpp $(INCLUDEDIR)/lru.hpp tuple_hash.hpp
+test_lru: $(INCLUDEDIR)/lru.hpp
 
 #end
