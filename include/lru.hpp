@@ -1,8 +1,9 @@
 #ifndef FUNCTOOLS_LRU_HPP_INCLUDED
 #define FUNCTOOLS_LRU_HPP_INCLUDED
 
-#include <unordered_map>
 #include <list>
+#include <type_traits>
+#include <unordered_map>
 
 namespace functools
 {
@@ -13,7 +14,7 @@ namespace functools
     class LRU
     {
         using OrderList = std::list<Key>;
-        using Position = typename OrderList::iterator;
+        using Position = typename OrderList::const_iterator;
 
         struct CachedItem
         {
@@ -62,7 +63,7 @@ namespace functools
                     mOrder.push_back(key);
                 }
 
-                // static_assert(std::is_move_constructible<CachedItem>::value, "");
+                static_assert(std::is_move_constructible<CachedItem>::value == std::is_move_constructible<Value>::value, "");
 
                 return mItems.emplace(
                         std::forward<TKey>(key),
