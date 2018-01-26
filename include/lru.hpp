@@ -19,9 +19,7 @@ namespace functools
         struct CachedItem
         {
             Value value;
-            const Position pos;
-
-            operator Value() const { return value; }
+            Position pos;
         };
 
         using Items = std::unordered_map<Key, CachedItem>;
@@ -30,8 +28,42 @@ namespace functools
             using key_type = Key;
             using mapped_type = Value;
             using size_type = typename Items::size_type;
-            using iterator = typename Items::iterator;
-            using const_iterator = typename Items::const_iterator;
+
+            struct value_type
+                : std::pair<const Key&, Value&>
+            {
+                value_type(const Key& key, Value& value)
+                    : std::pair<const Key&, Value&>(key, value)
+                {}
+
+                      value_type* operator-> ()       { return this; }
+                const value_type* operator-> () const { return this; }
+            };
+
+            class iterator
+            {
+                friend class LRU;
+
+                public:
+                          value_type operator*  ()       { return value_type(it->first, it->second.value); }
+                    const value_type operator*  () const { return value_type(it->first, it->second.value); }
+                          value_type operator-> ()       { return value_type(it->first, it->second.value); }
+                    const value_type operator-> () const { return value_type(it->first, it->second.value); }
+
+                    bool operator == (const iterator& that) const { return it == that.it; }
+                    bool operator != (const iterator& that) const { return it != that.it; }
+
+                private:
+                    iterator() {}
+
+                    iterator(typename Items::iterator _it)
+                        : it(std::move(_it))
+                    {}
+
+                    typename Items::iterator it;
+            };
+
+            using const_iterator = const iterator;
 
             LRU(size_type capacity)
                 : mCapacity(capacity)
@@ -40,7 +72,7 @@ namespace functools
             }
 
             template <typename TKey, typename TValue>
-            auto emplace(TKey&& key, TValue&& value)
+            std::pair<iterator, bool> emplace(TKey&& key, TValue&& value)
             {
                 if (mCapacity == 0)
                     return std::make_pair(end(), false);
@@ -48,7 +80,7 @@ namespace functools
                 auto found = find(key);
                 if (found != end())
                 {
-                    found->second.value = std::forward<TValue>(value);
+                    found->second = std::forward<TValue>(value);
                     return std::make_pair(found, false);
                 }
 
@@ -65,9 +97,10 @@ namespace functools
 
                 static_assert(std::is_move_constructible<CachedItem>::value == std::is_move_constructible<Value>::value, "");
 
-                return mItems.emplace(
+                auto result = mItems.emplace(
                         std::forward<TKey>(key),
                         CachedItem{std::forward<TValue>(value), --mOrder.end()});
+                return {std::move(result.first), result.second};
             }
 
             iterator find(const Key& key)

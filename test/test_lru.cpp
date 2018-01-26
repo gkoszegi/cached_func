@@ -141,24 +141,21 @@ BOOST_AUTO_TEST_CASE(lru_emplace_return_value)
     BOOST_CHECK_EQUAL(ret.second, true);
     BOOST_REQUIRE(ret.first != lru.end());
     BOOST_CHECK_EQUAL(ret.first->first, 1);
-    BOOST_CHECK_EQUAL(*ret.first->second.pos, 1);
-    BOOST_CHECK_EQUAL(ret.first->second.value, 11);
+    BOOST_CHECK_EQUAL(ret.first->second, 11);
 
     ret = lru.emplace(2, 22);
     BOOST_CHECK_EQUAL(lru.size(), 2);
     BOOST_CHECK_EQUAL(ret.second, true);
     BOOST_REQUIRE(ret.first != lru.end());
     BOOST_CHECK_EQUAL(ret.first->first, 2);
-    BOOST_CHECK_EQUAL(*ret.first->second.pos, 2);
-    BOOST_CHECK_EQUAL(ret.first->second.value, 22);
+    BOOST_CHECK_EQUAL(ret.first->second, 22);
 
     ret = lru.emplace(1, 111);
     BOOST_CHECK_EQUAL(lru.size(), 2);
     BOOST_CHECK_EQUAL(ret.second, false);
     BOOST_REQUIRE(ret.first != lru.end());
     BOOST_CHECK_EQUAL(ret.first->first, 1);
-    BOOST_CHECK_EQUAL(*ret.first->second.pos, 1);
-    BOOST_CHECK_EQUAL(ret.first->second.value, 111);
+    BOOST_CHECK_EQUAL(ret.first->second, 111);
     BOOST_CHECK(lru.find(1) != lru.end());
     BOOST_CHECK(lru.find(1)->second == 111);
     BOOST_CHECK(lru.find(2) != lru.end());
@@ -175,19 +172,19 @@ BOOST_AUTO_TEST_CASE(lru_emplace_string)
 
     auto ret = lru.emplace(1, "11");
     BOOST_REQUIRE(ret.first != lru.end());
-    BOOST_CHECK_EQUAL(ret.first->second.value, "11");
+    BOOST_CHECK_EQUAL(ret.first->second, "11");
     BOOST_REQUIRE(lru.find(1) != lru.end());
-    BOOST_CHECK_EQUAL(lru.find(1)->second.value, "11");
+    BOOST_CHECK_EQUAL(lru.find(1)->second, "11");
 
     ret = lru.emplace(2, "22");
     BOOST_REQUIRE(ret.first != lru.end());
-    BOOST_CHECK_EQUAL(ret.first->second.value, "22");
+    BOOST_CHECK_EQUAL(ret.first->second, "22");
     BOOST_REQUIRE(lru.find(2) != lru.end());
-    BOOST_CHECK_EQUAL(lru.find(2)->second.value, "22");
+    BOOST_CHECK_EQUAL(lru.find(2)->second, "22");
 
     ret = lru.emplace(1, "111");
     BOOST_REQUIRE(ret.first != lru.end());
-    BOOST_CHECK_EQUAL(ret.first->second.value, "111");
+    BOOST_CHECK_EQUAL(ret.first->second, "111");
     BOOST_REQUIRE(lru.find(1) != lru.end());
-    BOOST_CHECK_EQUAL(lru.find(1)->second.value, "111");
+    BOOST_CHECK_EQUAL(lru.find(1)->second, "111");
 }
