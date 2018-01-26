@@ -1,6 +1,6 @@
 CXX = g++
 INCLUDEDIR=../include
-CXXFLAGS = -std=c++14 -Wall -I$(INCLUDEDIR)
+CXXFLAGS = -std=c++14 -g -O3 -Wall -I$(INCLUDEDIR)
 
 all: test_cached test_lru
 
