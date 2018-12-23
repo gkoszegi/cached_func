@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <boost/mpl/list.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/copy.hpp>
 

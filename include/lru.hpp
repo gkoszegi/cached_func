@@ -54,10 +54,11 @@ namespace functools
                     bool operator != (const iterator& that) const { return it != that.it; }
 
                 private:
-                    iterator() {}
+                    iterator() = default;
 
-                    iterator(typename Items::iterator _it)
-                        : it(std::move(_it))
+                    template<typename T>
+                    iterator(T&& p)
+                      : it(std::forward<T>(p))
                     {}
 
                     typename Items::iterator it;
@@ -75,32 +76,32 @@ namespace functools
             std::pair<iterator, bool> emplace(TKey&& key, TValue&& value)
             {
                 if (mCapacity == 0)
-                    return std::make_pair(end(), false);
+                    return {end(), false};
 
                 auto found = find(key);
                 if (found != end())
                 {
                     found->second = std::forward<TValue>(value);
-                    return std::make_pair(found, false);
+                    return {found, false};
                 }
 
                 if (mOrder.size() == mCapacity)
                 {
-                    mItems.erase(mOrder.front());
+                    auto&& node = mItems.extract(mOrder.front());
                     mOrder.front() = key;
                     mOrder.splice(mOrder.end(), mOrder, mOrder.begin());
+                    node.key() = std::forward<TKey>(key);
+                    node.mapped().value = std::forward<TValue>(value);
+                    return {mItems.insert(mItems.begin(), std::move(node)), true};
                 }
                 else
                 {
                     mOrder.push_back(key);
+                    auto result = mItems.emplace(
+                            std::forward<TKey>(key),
+                            CachedItem{std::forward<TValue>(value), --mOrder.end()});
+                    return {std::move(result.first), true};
                 }
-
-                static_assert(std::is_move_constructible<CachedItem>::value == std::is_move_constructible<Value>::value, "");
-
-                auto result = mItems.emplace(
-                        std::forward<TKey>(key),
-                        CachedItem{std::forward<TValue>(value), --mOrder.end()});
-                return {std::move(result.first), result.second};
             }
 
             iterator find(const Key& key)
@@ -110,7 +111,7 @@ namespace functools
                     return {};
 
                 mOrder.splice(mOrder.end(), mOrder, found->second.pos);
-                return found;
+                return {found};
             }
 
             iterator end() { return {}; }
