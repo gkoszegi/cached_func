@@ -91,7 +91,6 @@ namespace functools
                     mOrder.splice(mOrder.end(), mOrder, mOrder.begin());
                     node.key() = std::forward<TKey>(key);
                     node.mapped().value = std::forward<TValue>(value);
-                    mOrder.front() = &node.key();
                     return {mItems.insert(mItems.begin(), std::move(node)), true};
                 }
                 else
