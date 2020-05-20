@@ -13,7 +13,7 @@ namespace functools
     template <typename Key, typename Value>
     class LRU
     {
-        using OrderList = std::list<Key>;
+        using OrderList = std::list<const Key*>;
         using Position = typename OrderList::const_iterator;
 
         struct CachedItem
@@ -85,21 +85,21 @@ namespace functools
                     return {found, false};
                 }
 
-                if (mOrder.size() == mCapacity)
+                if (mItems.size() == mCapacity)
                 {
-                    auto&& node = mItems.extract(mOrder.front());
-                    mOrder.front() = key;
+                    auto&& node = mItems.extract(*mOrder.front());
                     mOrder.splice(mOrder.end(), mOrder, mOrder.begin());
                     node.key() = std::forward<TKey>(key);
                     node.mapped().value = std::forward<TValue>(value);
+                    mOrder.front() = &node.key();
                     return {mItems.insert(mItems.begin(), std::move(node)), true};
                 }
                 else
                 {
-                    mOrder.push_back(key);
                     auto result = mItems.emplace(
                             std::forward<TKey>(key),
-                            CachedItem{std::forward<TValue>(value), --mOrder.end()});
+                            CachedItem{std::forward<TValue>(value), {}});
+                    result.first->second.pos = mOrder.insert(mOrder.end(), &result.first->first);
                     return {std::move(result.first), true};
                 }
             }
